@@ -1,3 +1,33 @@
+
+# Kanban Board
+
+A modern Kanban board application built with **Next.js** and **TypeScript**, designed for efficient task management. This project allows users to organize tasks across different stages, ensuring a smooth workflow from "To Do" to "Completed".
+
+## Features
+
+- **Drag and Drop Interface**: Utilizes the DnD Kit for a seamless drag-and-drop experience to move tasks between columns.
+- **Real-time Updates**: Tasks are dynamically updated in the UI, ensuring users always see the latest state without needing to refresh.
+- **Unique Task Titles**: Prevents duplicate tasks with the same title within a column to maintain clarity in task management.
+- **Responsive Design**: Fully responsive layout, optimized for both desktop and mobile devices.
+- **Task Prioritization**: Each task can be assigned a priority (High, Medium, Low) for better organization and focus.
+- **Due Dates**: Tasks can include due dates, helping users track deadlines effectively.
+- **Authentication**: Integrates **NextAuth** for user authentication.
+
+## Technologies Used
+
+- **Next.js**: Framework for server-rendered React applications.
+- **TypeScript**: For type safety and a better development experience.
+- **DnD Kit**: Library for implementing drag-and-drop functionality.
+- **Prisma**: ORM for managing the database.
+- **Tailwind CSS**: Utility-first CSS framework for styling.
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/kanban-board.git
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

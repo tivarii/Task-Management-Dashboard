@@ -33,7 +33,7 @@ const initialColumns: ColumnsType = {
   },
 };
 
-export function KanbanBoard() {
+export function KanbanBoard(): JSX.Element {
   const { tasks, updateTask } = useTaskContext();
   const [columns, setColumns] = useState<ColumnsType>(initialColumns);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -48,74 +48,93 @@ export function KanbanBoard() {
   );
 
   useEffect(() => {
-    const newColumns = { ...initialColumns };
-    const uniqueTitles = new Set<string>(); // Set to track unique titles
+    const newColumns: ColumnsType = {
+      "To Do": { id: "To Do", list: [] },
+      "In Progress": { id: "In Progress", list: [] },
+      "Completed": { id: "Completed", list: [] },
+    };
+
     tasks.forEach((task) => {
-      if (newColumns[task.status] && !uniqueTitles.has(task.title)) {
-        newColumns[task.status].list.push(task);
-        uniqueTitles.add(task.title); // Add title to set
+      if (newColumns[task.status]) {
+        // Only add the task if it's not already in any column
+        if (!Object.values(newColumns).some(column => 
+          column.list.some(existingTask => existingTask.id === task.id)
+        )) {
+          newColumns[task.status].list.push(task);
+        }
       }
     });
+
     setColumns(newColumns);
   }, [tasks]);
 
-  const handleDragStart = (event) => {
+  const handleDragStart = (event:{ active: { id: string }}) => {
     const { active } = event;
     setActiveId(active.id);
-    const task = Object.values(columns).flatMap(column => column.list).find(task => task.id === active.id);
+    const task = Object.values(columns).flatMap(column => column.list).find(task => task.id === activeId);
     setActiveTask(task || null);
   };
 
-  const handleDragOver = (event) => {
-    const { over } = event;
-    if (over) {
-      const overId = over.id;
-      const overColumn = Object.entries(columns).find(([, column]) => column.list.some(task => task.id === overId));
-      if (overColumn) {
-        setOverColumnId(overColumn[0]);
-      }
-    } else {
+  const handleDragOver = (event: { active: { id: string }, over: { id: string } | null }): void => {
+    const { active, over } = event;
+    
+    if (!over) {
       setOverColumnId(null);
+      return;
+    }
+
+    // Check if over a column
+    const overColumn = Object.keys(columns).find(columnId => columnId === over.id);
+    if (overColumn) {
+      setOverColumnId(overColumn);
+      return;
+    }
+
+    // If not over a column, find the column containing the task
+    const overTask = Object.values(columns).flatMap(column => column.list).find(task => task.id === over.id);
+    if (overTask) {
+      const overColumnId = Object.keys(columns).find(columnId => 
+        columns[columnId].list.some(task => task.id === over.id)
+      );
+      setOverColumnId(overColumnId || null);
     }
   };
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = async (event: { active: { id: string }, over: { id: string } | null }): Promise<void> => {
     const { active, over } = event;
     setActiveId(null);
     setActiveTask(null);
     setOverColumnId(null);
 
-    if (!over || active.id === over.id) return; // No valid drop
+    if (!over) return; // No valid drop
 
-    const activeColumn = Object.values(columns).find(column => column.list.some(task => task.id === active.id));
-    const overColumn = Object.values(columns).find(column => column.list.some(task => task.id === over.id));
+    const activeTask = Object.values(columns).flatMap(column => column.list).find(task => task.id === active.id);
+    if (!activeTask) return;
 
-    if (activeColumn && overColumn) {
-      const activeColumnId = activeColumn.id;
-      const overColumnId = overColumn.id;
+    const fromColumn = Object.keys(columns).find(columnId => 
+      columns[columnId].list.some(task => task.id === active.id)
+    );
+    const toColumn = over.id in columns ? over.id : Object.keys(columns).find(columnId => 
+      columns[columnId].list.some(task => task.id === over.id)
+    );
 
-      const activeIndex = activeColumn.list.findIndex(task => task.id === active.id);
-      const overIndex = overColumn.list.length > 0 ? overColumn.list.findIndex(task => task.id === over.id) : 0; // Drop at the start if the target is empty
+    if (!fromColumn || !toColumn) return;
 
-      const newColumns = { ...columns };
+    const newColumns = { ...columns };
 
-      if (activeColumnId === overColumnId) {
-        newColumns[activeColumnId].list = arrayMove(newColumns[activeColumnId].list, activeIndex, overIndex);
-      } else {
-        const [movedTask] = newColumns[activeColumnId].list.splice(activeIndex, 1);
-        movedTask.status = overColumnId;
-        if (!newColumns[overColumnId].list.some(task => task.title === movedTask.title)) { // Check for unique title
-          newColumns[overColumnId].list.splice(overIndex, 0, movedTask);
+    // Remove the task from the source column
+    newColumns[fromColumn].list = newColumns[fromColumn].list.filter(task => task.id !== active.id);
 
-          // Update task status in the context and database
-          await updateTask(movedTask.id, { status: overColumnId });
-        } else {
-          console.error(`Task with title "${movedTask.title}" already exists in the "${overColumnId}" column.`);
-        }
-      }
-
-      setColumns(newColumns);
+    // Add the task to the destination column, ensuring it's not already there
+    if (!newColumns[toColumn].list.some(task => task.id === active.id)) {
+      const insertIndex = over.id in columns ? 0 : newColumns[toColumn].list.findIndex(task => task.id === over.id);
+      newColumns[toColumn].list.splice(insertIndex, 0, { ...activeTask, status: toColumn });
     }
+
+    setColumns(newColumns);
+
+    // Update task status in the context and database
+    await updateTask(activeTask.id, { status: toColumn });
   };
 
   const renderTask = (task: Task) => (

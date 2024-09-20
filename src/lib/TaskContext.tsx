@@ -16,8 +16,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined)
 
 export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([])
-  const { data: session, status } = useSession()
-
+  const { status } = useSession()
   useEffect(() => {
     if (status === "authenticated") {
       fetchTasks()
