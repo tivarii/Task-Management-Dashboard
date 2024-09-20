@@ -3,6 +3,9 @@
 
 A modern Kanban board application built with **Next.js** and **TypeScript**, designed for efficient task management. This project allows users to organize tasks across different stages, ensuring a smooth workflow from "To Do" to "Completed".
 
+#loom video to know about the working of web
+https://www.loom.com/share/56a878926c9b4f8a832ded9b6023a129?sid=3e818bd8-9cc6-44a8-9603-9610c891ca2e
+
 ## Features
 
 - **Drag and Drop Interface**: Utilizes the DnD Kit for a seamless drag-and-drop experience to move tasks between columns.
